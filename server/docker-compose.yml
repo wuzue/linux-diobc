@@ -1,0 +1,53 @@
+version: '3.5'
+volumes:
+  db-volume:
+  web-volume:
+
+networks:
+  my-network:
+    driver: bridge
+
+services:
+  mysql:
+    container_name: database
+    image: mysql:latest
+    restart: unless-stopped
+    networks:
+      - 'my-network'
+    environment:
+      MYSQL_DATABASE: 'meubanco'
+      MYSQL_USER: 'root'
+      MYSQL_PASSWORD: 'mauFJcuf5dhRMQrjj'
+      MYSQL_ROOT_PASSWORD: 'mauFJcuf5dhRMQrjj'
+    ports:
+      - '3306:3306'
+    expose:
+      - '3306'
+    volumes:
+      - ./db/banco.sql:/docker-entrypoint-initdb.d/banco.sql
+      - db-volume:/var/lib/mysql
+
+  nginx:
+    container_name: webserver
+    image: nginx:latest
+    build:
+      context: ./nginx
+      dockerfile: ./dockerfile
+    restart: unless-stopped
+    networks:
+      - 'my-network'
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/nginx.conf
+    depends_on:
+      - php
+
+  php:
+    container_name: php
+    image: php:7-fpm
+    networks:
+      - 'my-network'
+    volumes:
+      - ./www:/www
